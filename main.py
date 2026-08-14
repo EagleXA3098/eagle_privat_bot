@@ -1,4 +1,5 @@
 import os
+import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -40,7 +41,7 @@ async def buy(callback: types.CallbackQuery):
     uid = str(callback.from_user.id)
     if users[uid]["balance"] >= PRICE:
         users[uid]["balance"] -= PRICE
-        await callback.message.answer("✅ Доступ открыт! Ссылка на архив: ССЫЛКА_НА_ОБЛАКО")
+        await callback.message.answer("✅ Доступ открыт! Ссылка на архив: ТВОЯ_ССЫЛКА")
     else:
         await callback.message.answer("❌ Не хватает ★. Приведи друга (20 ★).")
 
