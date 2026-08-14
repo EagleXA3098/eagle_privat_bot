@@ -1,4 +1,5 @@
 import os
+import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
@@ -64,5 +65,4 @@ async def main():
     await dp.start_polling(bot)
 
 if name == "main":
-    import asyncio
     asyncio.run(main())
