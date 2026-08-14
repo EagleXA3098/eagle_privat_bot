@@ -3,6 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
+from aiogram.types import Message, CallbackQuery
 from fastapi import FastAPI, Request
 import uvicorn
 
@@ -16,7 +17,7 @@ PRICE = 50
 REF_BONUS = 20
 
 @dp.message(Command("start"))
-async def start(message: types.Message):
+async def start(message: Message):
     args = message.text.split()
     user_id = str(message.from_user.id)
     if user_id not in users:
@@ -41,7 +42,7 @@ async def start(message: types.Message):
     )
 
 @dp.callback_query(lambda c: c.data == "buy")
-async def buy(callback: types.CallbackQuery):
+async def buy(callback: CallbackQuery):
     uid = str(callback.from_user.id)
     if users[uid]["balance"] >= PRICE:
         users[uid]["balance"] -= PRICE
@@ -51,14 +52,14 @@ async def buy(callback: types.CallbackQuery):
     await callback.answer()
 
 @dp.callback_query(lambda c: c.data == "my_refs")
-async def my_refs(callback: types.CallbackQuery):
+async def my_refs(callback: CallbackQuery):
     uid = str(callback.from_user.id)
     count = len(users[uid]["invited"])
     await callback.message.answer(f"👥 Привёл: {count} чел. Заработал: {count*REF_BONUS} ★")
     await callback.answer()
 
 @dp.callback_query(lambda c: c.data == "balance")
-async def balance(callback: types.CallbackQuery):
+async def balance(callback: CallbackQuery):
     uid = str(callback.from_user.id)
     await callback.message.answer(f"💳 Баланс: {users[uid]['balance']} ★")
     await callback.answer()
