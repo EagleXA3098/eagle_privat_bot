@@ -1,20 +1,22 @@
 import os
-import asyncio
+import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery
+from fastapi import FastAPI, Request
+import uvicorn
 
 API_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
+app = FastAPI()
 
 users = {}
 PRICE = 50
 REF_BONUS = 20
 
 @dp.message(Command("start"))
-async def start(message: Message):
+async def start(message: types.Message):
     args = message.text.split()
     user_id = str(message.from_user.id)
     if user_id not in users:
@@ -39,7 +41,7 @@ async def start(message: Message):
     )
 
 @dp.callback_query(lambda c: c.data == "buy")
-async def buy(callback: CallbackQuery):
+async def buy(callback: types.CallbackQuery):
     uid = str(callback.from_user.id)
     if users[uid]["balance"] >= PRICE:
         users[uid]["balance"] -= PRICE
@@ -49,20 +51,33 @@ async def buy(callback: CallbackQuery):
     await callback.answer()
 
 @dp.callback_query(lambda c: c.data == "my_refs")
-async def my_refs(callback: CallbackQuery):
+async def my_refs(callback: types.CallbackQuery):
     uid = str(callback.from_user.id)
     count = len(users[uid]["invited"])
     await callback.message.answer(f"👥 Привёл: {count} чел. Заработал: {count*REF_BONUS} ★")
     await callback.answer()
 
 @dp.callback_query(lambda c: c.data == "balance")
-async def balance(callback: CallbackQuery):
+async def balance(callback: types.CallbackQuery):
     uid = str(callback.from_user.id)
     await callback.message.answer(f"💳 Баланс: {users[uid]['balance']} ★")
     await callback.answer()
 
-async def main():
-    await dp.start_polling(bot)
+@app.post("/webhook")
+async def webhook(request: Request):
+    data = await request.json()
+    update = types.Update(**data)
+    await dp.process_update(update)
+    return {"ok": True}
+
+@app.on_event("startup")
+async def on_startup():
+    webhook_url = "https://eagle-privat-bot.onrender.com/webhook"
+    await bot.set_webhook(webhook_url)
+
+@app.get("/")
+async def root():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvicorn.run(app, host="0.0.0.0", port=8080)
